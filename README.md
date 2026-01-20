@@ -1,6 +1,6 @@
 # AI Automation Workflows
 
-Welcome to **AI_Automation_Workflow**, a curated collection of **professional AI-powered automation workflows** created with [n8n](https://n8n.io). This repository demonstrates practical applications of AI in automating tasks, integrating APIs, and streamlining complex workflows across multiple domains.
+Welcome to **AI_Automation_Workflow**, a curated collection of **professional AI-powered automation workflows**. This repository demonstrates practical applications of AI in automating tasks, integrating APIs, and streamlining complex workflows across multiple domains.
 
 
 
@@ -50,7 +50,6 @@ This repository is continuously updated with new AI automation workflows. Contri
 
 This repository is licensed under the [MIT License](LICENSE).
 
-## Note: This repository is continuously updated with new AI automation workflows. More projects will be added over time, showcasing the evolving scope of AI-powered automation and workflow integration.
 
 
-> **Showcase of AI automation and workflow engineering using n8n — continuously updated to reflect real-world, professional applications.**
+> **Showcase of AI automation and workflow engineering — continuously updated to reflect real-world, professional applications.**
