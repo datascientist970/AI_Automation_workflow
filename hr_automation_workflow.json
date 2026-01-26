@@ -1,0 +1,295 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "hr-onboarding",
+        "options": {}
+      },
+      "id": "b015ac57-7ffa-4423-810c-8224164f7ac5",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        128,
+        -96
+      ],
+      "webhookId": "305488d4-b099-4074-82a1-f349035cd64f"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "workflow_name",
+              "value": "HR Automation – Employee Onboarding",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "description",
+              "value": "Automated employee onboarding workflow with AI assistance",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "311256a8-b55b-4f49-828b-f8b3425e97bb",
+      "name": "Workflow Configuration",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        352,
+        -96
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "employee_id",
+              "value": "={{ $json.body.employee_id }}",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "name",
+              "value": "={{ $json.body.name }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "email",
+              "value": "={{ $json.body.email }}",
+              "type": "string"
+            },
+            {
+              "id": "id-4",
+              "name": "department",
+              "value": "={{ $json.body.department }}",
+              "type": "string"
+            },
+            {
+              "id": "id-5",
+              "name": "joining_date",
+              "value": "={{ $json.body.joining_date }}",
+              "type": "string"
+            },
+            {
+              "id": "id-6",
+              "name": "onboarding_status",
+              "value": "Started",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b4cd7436-dd88-43f5-a8d6-26caec350a09",
+      "name": "Map Employee Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        576,
+        -96
+      ]
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "mode": "id",
+          "value": "gpt-4o-mini"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "={{ 'System: You are an HR Automation AI Agent. Your job is to confirm onboarding steps and return structured JSON.\\n\\nUser: Process this employee onboarding data:\\n' + JSON.stringify($json) }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "87cd5a2b-4be3-46c0-8223-71198a48529c",
+      "name": "HR Automation AI",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        800,
+        -96
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "ai_response",
+              "value": "={{ $json.message.content }}",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "employee_id",
+              "value": "={{ $('Map Employee Data').item.json.employee_id }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "name",
+              "value": "={{ $('Map Employee Data').item.json.name }}",
+              "type": "string"
+            },
+            {
+              "id": "id-4",
+              "name": "email",
+              "value": "={{ $('Map Employee Data').item.json.email }}",
+              "type": "string"
+            },
+            {
+              "id": "id-5",
+              "name": "department",
+              "value": "={{ $('Map Employee Data').item.json.department }}",
+              "type": "string"
+            },
+            {
+              "id": "id-6",
+              "name": "onboarding_status",
+              "value": "={{ $('Map Employee Data').item.json.onboarding_status }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "05f20eed-202f-4c21-8913-1c5bf51e309a",
+      "name": "Extract AI Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1152,
+        -96
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "hr@company.com",
+        "toEmail": "={{ $json.email }}",
+        "subject": "Welcome to the Company",
+        "html": "={{ '<html><body><h2>Welcome to the Company, ' + $json.name + '!</h2><p>We are excited to have you join our ' + $json.department + ' department.</p><p>Your onboarding process has started and we will guide you through all the necessary steps.</p><p><strong>Employee ID:</strong> ' + $json.employee_id + '</p><p><strong>Joining Date:</strong> ' + $json.joining_date + '</p><p>If you have any questions, please don\\'t hesitate to reach out to our HR team.</p><p>Best regards,<br>HR Team</p></body></html>' }}",
+        "options": {}
+      },
+      "id": "260ed1dd-d8cc-46e9-b1a6-9a2fbe2dc645",
+      "name": "Send Welcome Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1376,
+        -96
+      ],
+      "webhookId": "bcfb3c57-5653-4a80-952b-e75122984f68"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { 'success': true, 'message': 'Employee onboarding completed successfully', 'employee_id': $json.employee_id, 'name': $json.name, 'onboarding_status': $json.onboarding_status } }}",
+        "options": {}
+      },
+      "id": "880981c4-7204-43bd-be87-421beefb342d",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1600,
+        -96
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Workflow Configuration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Workflow Configuration": {
+      "main": [
+        [
+          {
+            "node": "Map Employee Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map Employee Data": {
+      "main": [
+        [
+          {
+            "node": "HR Automation AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HR Automation AI": {
+      "main": [
+        [
+          {
+            "node": "Extract AI Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract AI Response": {
+      "main": [
+        [
+          {
+            "node": "Send Welcome Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Welcome Email": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "f5189ab2-b508-4b4c-8924-f0e06e2def61",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "241b798e45d31da326d6d61cb74091878e9e36afce779239b17a965bf800b1e9"
+  },
+  "id": "qOIYOz5SqJCt0rgEifDrb",
+  "tags": []
+}
