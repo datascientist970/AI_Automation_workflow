@@ -1,0 +1,2453 @@
+{
+  "name": "My workflow 3",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "signal-webhook",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "09263d17-3428-4c93-a916-b55564a1e9ff",
+      "name": "Signal Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -3008,
+        3632
+      ],
+      "webhookId": "69c80165-235d-47ee-a86b-6128402aefad"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "source",
+              "value": "={{ $json.body.source }}",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "channel",
+              "value": "={{ $json.body.channel }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "content",
+              "value": "={{ $json.body.content }}",
+              "type": "string"
+            },
+            {
+              "id": "id-4",
+              "name": "timestamp",
+              "value": "={{ $json.body.timestamp }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f1d8fb88-54a3-4423-8d5e-e94460b5d4d7",
+      "name": "Workflow Configuration",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -2784,
+        3632
+      ]
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n\t\"type\": \"object\",\n\t\"properties\": {\n\t\t\"intent\": {\n\t\t\t\"type\": \"string\",\n\t\t\t\"description\": \"The detected intent of the signal\"\n\t\t},\n\t\t\"urgency\": {\n\t\t\t\"type\": \"string\",\n\t\t\t\"description\": \"Urgency level: low, medium, high, critical\"\n\t\t},\n\t\t\"sentiment\": {\n\t\t\t\"type\": \"string\",\n\t\t\t\"description\": \"Sentiment: positive, neutral, negative\"\n\t\t},\n\t\t\"confidence_score\": {\n\t\t\t\"type\": \"number\",\n\t\t\t\"description\": \"Confidence score from 0 to 1\"\n\t\t},\n\t\t\"risk_flags\": {\n\t\t\t\"type\": \"array\",\n\t\t\t\"items\": {\n\t\t\t\t\"type\": \"string\"\n\t\t\t},\n\t\t\t\"description\": \"Array of identified risk flags\"\n\t\t},\n\t\t\"recommended_action\": {\n\t\t\t\"type\": \"string\",\n\t\t\t\"description\": \"Recommended action: notify_human, create_crm_task, escalate_management, or open_support_ticket\"\n\t\t}\n\t},\n\t\"required\": [\"intent\", \"urgency\", \"sentiment\", \"confidence_score\", \"risk_flags\", \"recommended_action\"]\n}"
+      },
+      "id": "d1baaa14-197f-40cb-81f9-9c31ca02c46f",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -2552,
+        3856
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "id",
+          "value": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "93ae1a1b-d8f3-4478-9014-e2cbb069d8d8",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -2424,
+        3856
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Signal Data:\nSource: {{ $json.source }}\nChannel: {{ $json.channel }}\nContent: {{ $json.content }}\nTimestamp: {{ $json.timestamp }}\n\nAnalyze this signal and provide a structured assessment:\n\n1. INTENT: What is the user trying to communicate or achieve?\n2. URGENCY: Rate as low, medium, high, or critical based on:\n   - Time-sensitive keywords (urgent, asap, immediately)\n   - Problem severity indicators\n   - Business impact signals\n3. SENTIMENT: Classify as positive, neutral, or negative\n4. CONFIDENCE_SCORE: Your confidence in this analysis (0.0 to 1.0)\n5. RISK_FLAGS: Identify any concerning elements:\n   - Security threats\n   - Compliance issues\n   - Customer churn risk\n   - Legal concerns\n   - Data breach indicators\n6. RECOMMENDED_ACTION: Choose the most appropriate action:\n   - notify_human: For general alerts requiring human awareness\n   - create_crm_task: For sales/customer success follow-ups\n   - escalate_management: For high-priority issues requiring leadership\n   - open_support_ticket: For technical support requests",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an AI Signal Analyzer that evaluates incoming signals and determines the appropriate action. Analyze signals for intent, urgency, sentiment, confidence, risk flags, and recommend the most appropriate action from: notify_human, create_crm_task, escalate_management, or open_support_ticket."
+        }
+      },
+      "id": "a84fd299-7c46-4552-9b0c-6e94ab93aa6d",
+      "name": "AI Signal Analyzer",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -2560,
+        3632
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.recommended_action }}",
+                    "rightValue": "notify_human",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Notify Human"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.recommended_action }}",
+                    "rightValue": "create_crm_task",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Create CRM Task"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.recommended_action }}",
+                    "rightValue": "escalate_management",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Escalate Management"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.recommended_action }}",
+                    "rightValue": "open_support_ticket",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Open Support Ticket"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c59712db-75e6-467b-9d60-fbd5b7a27cd5",
+      "name": "Route by Action",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -2208,
+        3600
+      ]
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_SLACK_CHANNEL_ID"
+        },
+        "text": "=🚨 Signal Alert - Human Notification Required\n\n*Source:* {{ $('Workflow Configuration').item.json.source }}\n*Channel:* {{ $('Workflow Configuration').item.json.channel }}\n*Timestamp:* {{ $('Workflow Configuration').item.json.timestamp }}\n\n*Intent:* {{ $json.intent }}\n*Urgency:* {{ $json.urgency }}\n*Sentiment:* {{ $json.sentiment }}\n*Confidence:* {{ $json.confidence_score }}\n\n*Content:*\n{{ $('Workflow Configuration').item.json.content }}\n\n*Risk Flags:* {{ $json.risk_flags.join(', ') || 'None' }}",
+        "otherOptions": {}
+      },
+      "id": "82273327-c4af-4d1f-b924-785107a319f3",
+      "name": "Send Slack Notification",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        -1984,
+        3344
+      ],
+      "webhookId": "6d1f2cf1-a5b3-4fe6-8767-c175f360f72d"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://your-crm-api.example.com/api/tasks",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_CRM_API_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\"title\": \"Follow-up: \" + $('Workflow Configuration').item.json.source, \"description\": $('Workflow Configuration').item.json.content, \"priority\": $json.urgency, \"source\": $('Workflow Configuration').item.json.channel, \"metadata\": {\"intent\": $json.intent, \"sentiment\": $json.sentiment, \"confidence\": $json.confidence_score, \"risk_flags\": $json.risk_flags, \"timestamp\": $('Workflow Configuration').item.json.timestamp}} }}",
+        "options": {}
+      },
+      "id": "b6e16e44-1901-4d94-a3e3-8408f3b0346a",
+      "name": "Create CRM Task",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1984,
+        3536
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "alerts@yourcompany.com",
+        "toEmail": "management@yourcompany.com",
+        "subject": "=🚨 ESCALATION REQUIRED: {{ $json.urgency }} Priority Signal",
+        "emailFormat": "text",
+        "text": "=MANAGEMENT ESCALATION REQUIRED\n\nA signal has been flagged for immediate management attention.\n\n=== SIGNAL DETAILS ===\nSource: {{ $('Workflow Configuration').item.json.source }}\nChannel: {{ $('Workflow Configuration').item.json.channel }}\nTimestamp: {{ $('Workflow Configuration').item.json.timestamp }}\n\n=== AI ANALYSIS ===\nIntent: {{ $json.intent }}\nUrgency: {{ $json.urgency }}\nSentiment: {{ $json.sentiment }}\nConfidence Score: {{ $json.confidence_score }}\n\nRisk Flags: {{ $json.risk_flags.join(', ') || 'None identified' }}\n\n=== ORIGINAL CONTENT ===\n{{ $('Workflow Configuration').item.json.content }}\n\n=== RECOMMENDED ACTION ===\nImmediate review and response required.\n\nThis is an automated alert from the Signal Decision Engine.",
+        "options": {}
+      },
+      "id": "31dcb675-f7f9-467c-905c-a1edd0811fad",
+      "name": "Escalate to Management",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        -1984,
+        3728
+      ],
+      "webhookId": "d536c126-c8a2-441d-997b-02f926c8175a"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://your-helpdesk-api.example.com/api/tickets",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_HELPDESK_API_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\"subject\": \"Support Request: \" + $json.intent, \"description\": $('Workflow Configuration').item.json.content, \"priority\": $json.urgency, \"source\": $('Workflow Configuration').item.json.source, \"channel\": $('Workflow Configuration').item.json.channel, \"tags\": $json.risk_flags, \"metadata\": {\"sentiment\": $json.sentiment, \"confidence_score\": $json.confidence_score, \"timestamp\": $('Workflow Configuration').item.json.timestamp}} }}",
+        "options": {}
+      },
+      "id": "bf8016c3-520b-4fb9-adb9-0b80a0575750",
+      "name": "Open Support Ticket",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1984,
+        3920
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "id": "df24ffbc-2ce1-4e4a-bf89-5bbd968f5fe1",
+      "name": "Daily Revenue Check",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -3008,
+        4624
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "revenue-events",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "89205b21-167e-4513-b571-9612c5f67da8",
+      "name": "Real-time Payment Events",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -3008,
+        4816
+      ],
+      "webhookId": "8740ed43-98d3-4540-bf70-e5b251d34d82"
+    },
+    {
+      "parameters": {},
+      "id": "41d19dba-8d34-4a59-89dd-522218fbec33",
+      "name": "Merge Triggers",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -2784,
+        4720
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "trigger_source",
+              "value": "={{ $json.body ? 'webhook' : 'schedule' }}",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "event_type",
+              "value": "={{ $json.body?.event_type || 'scheduled_check' }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "timestamp",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "71611e78-3f96-4b96-8fe6-c3dce3595dfc",
+      "name": "Workflow Configuration1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -2560,
+        4720
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.stripe.example.com/v1/payment_intents",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "failed"
+            },
+            {
+              "name": "created",
+              "value": "={{ $now.minus({ days: 7 }).toUnixInteger() }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_STRIPE_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d8d24bfc-8b7a-46f9-a874-acc5a50724ba",
+      "name": "Fetch Payment Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -2336,
+        4528
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.crm.example.com/v1/leads",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "stale"
+            },
+            {
+              "name": "last_contact_before",
+              "value": "={{ $now.minus({ days: 14 }).toISO() }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_CRM_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6b9cc959-e203-4c5a-89c7-9039ca93cd39",
+      "name": "Fetch CRM Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -2336,
+        4720
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.billing.example.com/v1/subscriptions",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "at_risk"
+            },
+            {
+              "name": "renewal_within_days",
+              "value": "30"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_BILLING_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bdf3df4f-124a-4d9b-a091-6c856a80c198",
+      "name": "Fetch Subscription Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -2336,
+        4912
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "options": {}
+      },
+      "id": "a539d12b-7bde-41de-a346-fc99cc1184c7",
+      "name": "Combine All Data Sources",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -2112,
+        4624
+      ]
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"leak_type\": {\n      \"type\": \"string\",\n      \"enum\": [\"failed_payment\", \"abandoned_lead\", \"missed_follow_up\", \"renewal_risk\", \"churn_detected\", \"unknown\"],\n      \"description\": \"Type of revenue leak detected\"\n    },\n    \"risk_level\": {\n      \"type\": \"string\",\n      \"enum\": [\"low\", \"medium\", \"high\", \"critical\"],\n      \"description\": \"Financial impact risk level\"\n    },\n    \"estimated_impact\": {\n      \"type\": \"string\",\n      \"description\": \"Estimated revenue at risk (e.g., $5,000)\"\n    },\n    \"confidence_score\": {\n      \"type\": \"number\",\n      \"minimum\": 0,\n      \"maximum\": 1,\n      \"description\": \"Confidence in analysis from 0.0 to 1.0\"\n    },\n    \"recommended_action\": {\n      \"type\": \"string\",\n      \"enum\": [\"retry_payment\", \"notify_finance\", \"create_sales_task\", \"trigger_retention_flow\", \"escalate_management\", \"ignore\"],\n      \"description\": \"Recommended corrective action\"\n    },\n    \"action_reason\": {\n      \"type\": \"string\",\n      \"description\": \"Explanation for the recommended action\"\n    }\n  },\n  \"required\": [\"leak_type\", \"risk_level\", \"estimated_impact\", \"confidence_score\", \"recommended_action\", \"action_reason\"]\n}"
+      },
+      "id": "f9e7a7b2-15fe-4531-88dd-64f3f8ae629b",
+      "name": "Revenue Leak Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -1880,
+        4848
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "id",
+          "value": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "d1e0cc4b-fdd9-4eb9-9c2b-9e8c35213723",
+      "name": "OpenAI Chat Model1",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -1752,
+        4848
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Revenue Data Analysis:\n\nPayment Data: {{ JSON.stringify($('Fetch Payment Data').item.json, null, 2) }}\n\nCRM Data: {{ JSON.stringify($('Fetch CRM Data').item.json, null, 2) }}\n\nSubscription Data: {{ JSON.stringify($('Fetch Subscription Data').item.json, null, 2) }}\n\nAnalyze this revenue data and identify potential revenue leaks:\n\n1. LEAK_TYPE: Classify the revenue leak:\n   - failed_payment: Payment processing failures\n   - abandoned_lead: Sales leads not followed up\n   - missed_follow_up: Customer touchpoints missed\n   - renewal_risk: Subscriptions at risk of not renewing\n   - churn_detected: Active churn signals detected\n   - unknown: Unable to classify\n\n2. RISK_LEVEL: Assess financial impact (low, medium, high, critical):\n   - Consider revenue amount at risk\n   - Customer lifetime value\n   - Urgency of intervention needed\n\n3. ESTIMATED_IMPACT: Quantify the potential revenue loss (e.g., $5,000, $50,000)\n\n4. CONFIDENCE_SCORE: Your confidence in this analysis (0.0 to 1.0)\n\n5. RECOMMENDED_ACTION: Choose the most appropriate action:\n   - retry_payment: Attempt to reprocess failed payment\n   - notify_finance: Alert finance team for manual review\n   - create_sales_task: Create follow-up task for sales team\n   - trigger_retention_flow: Initiate customer retention campaign\n   - escalate_management: Escalate to executive leadership\n   - ignore: No action needed\n\n6. ACTION_REASON: Explain why this action is recommended",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a Revenue Leak Detection AI that analyzes payment failures, stale leads, subscription churn risks, and missed renewals. Identify the leak type, assess financial impact, score confidence, and recommend corrective actions."
+        }
+      },
+      "id": "a46b8ef1-38c4-44a3-af9e-37f1c0976aa4",
+      "name": "Revenue Leak Analyzer",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -1888,
+        4624
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.recommended_action }}",
+                    "rightValue": "retry_payment",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Retry Payment"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.recommended_action }}",
+                    "rightValue": "notify_finance",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Notify Finance"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.recommended_action }}",
+                    "rightValue": "create_sales_task",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Create Sales Task"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.recommended_action }}",
+                    "rightValue": "trigger_retention_flow",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Trigger Retention Flow"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.recommended_action }}",
+                    "rightValue": "escalate_management",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Escalate Management"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.recommended_action }}",
+                    "rightValue": "ignore",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Ignore"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "09422b5d-0b42-4df1-aa6f-578bb37866c7",
+      "name": "Route by Recommended Action",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -1536,
+        4560
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.stripe.example.com/v1/payment_intents/retry",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_STRIPE_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"payment_intent_id\": $json.payment_intent_id } }}",
+        "options": {}
+      },
+      "id": "350d25ef-237e-4761-892b-7903b1f881a0",
+      "name": "Retry Payment Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1312,
+        4144
+      ]
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_FINANCE_SLACK_CHANNEL"
+        },
+        "text": "=💰 Revenue Leak Alert - Finance Team Notification\n\n*Leak Type:* {{ $json.leak_type }}\n*Risk Level:* {{ $json.risk_level }}\n*Estimated Impact:* ${{ $json.estimated_impact }}\n\n*Customer Details:*\n• Customer ID: {{ $json.customer_id }}\n• Account Status: {{ $json.account_status }}\n• MRR: ${{ $json.mrr }}\n\n*Issue Description:*\n{{ $json.description }}\n\n*Root Cause:*\n{{ $json.root_cause }}\n\n*Recommended Action:*\n{{ $json.recommended_action }}\n\n*Confidence Score:* {{ $json.confidence_score }}\n\n---\n_Detected by Revenue Leak Analyzer at {{ $json.timestamp }}_",
+        "otherOptions": {}
+      },
+      "id": "3e00f027-714f-4c0a-95d6-22fdfe4c079c",
+      "name": "Send Finance Alert",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        -1312,
+        4336
+      ],
+      "webhookId": "b0e75fdc-5d0b-462a-9ff0-cab7a1fa57f4"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.crm.example.com/v1/tasks",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_CRM_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  \"title\": \"Revenue Leak: \" + $json.leak_type,\n  \"description\": \"Action required: \" + $json.action_reason,\n  \"estimated_impact\": $json.estimated_impact,\n  \"leak_type\": $json.leak_type,\n  \"priority\": $json.urgency || \"medium\",\n  \"metadata\": {\n    \"confidence_score\": $json.confidence_score,\n    \"timestamp\": $now\n  }\n} }}",
+        "options": {}
+      },
+      "id": "b18e8175-4e9e-4130-a91f-ceb7aea92efb",
+      "name": "Create Sales Task in CRM",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1312,
+        4528
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "retention@yourcompany.com",
+        "toEmail": "={{ $('Combine All Data Sources').item.json.customer_email }}",
+        "subject": "We'd Love to Keep You - Special Retention Offer",
+        "html": "<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }\n    .container { max-width: 600px; margin: 0 auto; padding: 20px; }\n    .header { background-color: #4CAF50; color: white; padding: 20px; text-align: center; }\n    .content { padding: 30px; background-color: #f9f9f9; }\n    .offer-box { background-color: #fff; border: 2px solid #4CAF50; padding: 20px; margin: 20px 0; border-radius: 8px; }\n    .cta-button { display: inline-block; background-color: #4CAF50; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }\n    .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <div class=\"header\">\n      <h1>We Value Your Partnership</h1>\n    </div>\n    <div class=\"content\">\n      <p>Dear Valued Customer,</p>\n      \n      <p>We noticed some recent changes with your account, and we wanted to reach out personally. Your business means a lot to us, and we'd like to offer you something special to show our appreciation.</p>\n      \n      <div class=\"offer-box\">\n        <h2 style=\"color: #4CAF50; margin-top: 0;\">🎁 Exclusive Retention Offer</h2>\n        <p><strong>We're offering you:</strong></p>\n        <ul>\n          <li>20% discount on your next 3 months</li>\n          <li>Priority customer support</li>\n          <li>Free upgrade to premium features</li>\n          <li>Dedicated account manager</li>\n        </ul>\n        <p style=\"color: #666; font-size: 14px;\"><em>This offer is exclusively for you and expires in 7 days.</em></p>\n      </div>\n      \n      <p>We understand that circumstances change, and we're here to help make things work for you. If there's anything we can do to improve your experience, we'd love to hear from you.</p>\n      \n      <center>\n        <a href=\"https://yourcompany.com/retention-offer\" class=\"cta-button\">Claim Your Offer</a>\n      </center>\n      \n      <p>If you have any questions or would like to discuss your account, please don't hesitate to reach out. We're here to help.</p>\n      \n      <p>Thank you for being a valued customer.</p>\n      \n      <p>Best regards,<br>\n      <strong>The Customer Success Team</strong><br>\n      Your Company</p>\n    </div>\n    <div class=\"footer\">\n      <p>This email was sent to you because we value your business.<br>\n      If you have any questions, contact us at retention@yourcompany.com</p>\n    </div>\n  </div>\n</body>\n</html>",
+        "options": {}
+      },
+      "id": "22b587e8-12a3-494e-b241-7ac3831552bf",
+      "name": "Send Retention Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        -1312,
+        4720
+      ],
+      "webhookId": "45e7471f-d8f3-48dd-96cb-e443bfcf3215"
+    },
+    {
+      "parameters": {
+        "fromEmail": "alerts@yourcompany.com",
+        "toEmail": "executives@yourcompany.com",
+        "subject": "={{ '🚨 CRITICAL REVENUE LEAK: ' + $json.risk_level + ' - ' + $json.leak_type }}",
+        "emailFormat": "text",
+        "text": "=EXECUTIVE ALERT - CRITICAL REVENUE LEAK DETECTED\n\nA critical revenue leak has been identified and requires immediate executive attention.\n\n=== LEAK DETAILS ===\nLeak Type: {{ $json.leak_type }}\nRisk Level: {{ $json.risk_level }}\nEstimated Impact: {{ $json.estimated_impact }}\nConfidence Score: {{ $json.confidence_score }}\n\n=== IMMEDIATE ACTION REQUIRED ===\n{{ $json.recommended_action }}\n\n=== ANALYSIS SUMMARY ===\n{{ $json.analysis_summary }}\n\nThis is an automated critical alert from the Revenue Leak Detection System.\nImmediate review and action required.",
+        "options": {}
+      },
+      "id": "cf56a454-5559-4492-b26a-008ccbc0f05e",
+      "name": "Escalate to Executives",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        -1312,
+        4912
+      ],
+      "webhookId": "9136ee46-ccc7-4120-9a40-b2c059bb1850"
+    },
+    {
+      "parameters": {},
+      "id": "5bf6cd87-5334-4ba0-8866-28271684ce79",
+      "name": "No Action Required",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -1312,
+        5104
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "e94efebb-7e63-44e8-864f-bfe0eb3f1cb9",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -3008,
+        5616
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "id": "7ecdd6da-44a2-450f-98e7-3343af7d3081",
+      "name": "Daily Contract Check",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -3008,
+        5808
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "contract-upload",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "55b3b970-551d-40c1-ad6d-a805fc7421b7",
+      "name": "Contract Upload Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -3008,
+        6000
+      ],
+      "webhookId": "e1232fd8-be6e-4e1b-8fa9-941b5bf1d690"
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "id": "6a4157f3-a050-45b7-b276-588a458ccad9",
+      "name": "Merge All Triggers",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -2784,
+        5792
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "trigger_source",
+              "value": "={{ $json.body ? 'webhook' : ($json.path ? 'webhook' : 'schedule') }}",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "file_id",
+              "value": "={{ $json.body?.file_id || 'PLACEHOLDER_GOOGLE_DRIVE_FILE_ID' }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "timestamp",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "b0c300d8-98c8-4771-a18c-f33246b3f325",
+      "name": "Workflow Configuration2",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -2560,
+        5808
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $json.file_id }}"
+        },
+        "options": {
+          "fileName": "={{ 'contract_' + $now.toFormat('yyyy-MM-dd') }}"
+        }
+      },
+      "id": "a2ec9237-3f68-493f-8aa7-1696571b3e13",
+      "name": "Download Contract from Google Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -2336,
+        5808
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "id": "2dc9120b-2005-482c-b35b-7609ca323adb",
+      "name": "Extract Text from Document",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -2112,
+        5808
+      ]
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"document_type\": {\n      \"type\": \"string\",\n      \"enum\": [\"contract\", \"policy\", \"agreement\", \"amendment\", \"unknown\"],\n      \"description\": \"Type of document analyzed\"\n    },\n    \"key_obligations\": {\n      \"type\": \"array\",\n      \"items\": {\"type\": \"string\"},\n      \"description\": \"List of key obligations and requirements\"\n    },\n    \"critical_dates\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"date\": {\"type\": \"string\"},\n          \"description\": {\"type\": \"string\"},\n          \"days_until\": {\"type\": \"number\"}\n        }\n      },\n      \"description\": \"Important dates and deadlines\"\n    },\n    \"risk_level\": {\n      \"type\": \"string\",\n      \"enum\": [\"low\", \"medium\", \"high\", \"critical\"],\n      \"description\": \"Overall risk assessment\"\n    },\n    \"compliance_issues\": {\n      \"type\": \"array\",\n      \"items\": {\"type\": \"string\"},\n      \"description\": \"Identified compliance concerns\"\n    },\n    \"urgency\": {\n      \"type\": \"string\",\n      \"enum\": [\"low\", \"medium\", \"high\", \"critical\"],\n      \"description\": \"Urgency level for action\"\n    },\n    \"recommended_action\": {\n      \"type\": \"string\",\n      \"enum\": [\"notify_legal\", \"notify_hr\", \"notify_finance\", \"create_compliance_task\", \"escalate_management\", \"ignore\"],\n      \"description\": \"Recommended next action\"\n    },\n    \"action_reason\": {\n      \"type\": \"string\",\n      \"description\": \"Explanation for recommended action\"\n    }\n  },\n  \"required\": [\"document_type\", \"key_obligations\", \"critical_dates\", \"risk_level\", \"compliance_issues\", \"urgency\", \"recommended_action\", \"action_reason\"]\n}"
+      },
+      "id": "828221dd-d22e-4db6-9e26-950f6472a9f9",
+      "name": "Contract Analysis Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -1880,
+        6032
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "id",
+          "value": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "47e27d3a-f9c2-46bd-9e3e-7d9615d2a91e",
+      "name": "OpenAI Chat Model2",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -1752,
+        6032
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Contract/Policy Document Analysis:\n\nDocument Text:\n{{ $json.text }}\n\nSource: {{ $('Workflow Configuration2').item.json.trigger_source }}\nTimestamp: {{ $('Workflow Configuration2').item.json.timestamp }}\n\nAnalyze this contract or policy document and provide a comprehensive risk assessment:\n\n1. DOCUMENT_TYPE: Classify the document (contract, policy, agreement, amendment, unknown)\n\n2. KEY_OBLIGATIONS: Extract all critical obligations, requirements, and commitments:\n   - Payment terms and schedules\n   - Deliverables and milestones\n   - Performance requirements\n   - Reporting obligations\n   - Confidentiality requirements\n\n3. CRITICAL_DATES: Identify all important dates with days until each:\n   - Contract expiry/renewal dates\n   - Termination notice periods\n   - Payment due dates\n   - Compliance deadlines\n   - Review dates\n   - Option exercise dates\n\n4. RISK_LEVEL: Assess overall risk (low, medium, high, critical) based on:\n   - Proximity to critical deadlines\n   - Financial exposure\n   - Compliance requirements\n   - Penalty clauses\n   - Termination risks\n\n5. COMPLIANCE_ISSUES: Identify potential compliance concerns:\n   - Missing required clauses\n   - Regulatory violations\n   - Policy conflicts\n   - Unclear terms\n   - Unfavorable conditions\n\n6. URGENCY: Rate urgency level (low, medium, high, critical) based on:\n   - Time until next critical date\n   - Severity of potential violations\n   - Financial impact\n\n7. RECOMMENDED_ACTION: Choose the most appropriate action:\n   - notify_legal: Legal review required\n   - notify_hr: HR policy matters\n   - notify_finance: Financial obligations\n   - create_compliance_task: Compliance tracking needed\n   - escalate_management: Executive attention required\n   - ignore: No immediate action needed\n\n8. ACTION_REASON: Explain why this action is recommended",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a Contract & Policy Risk Analyzer AI that reviews legal documents to identify obligations, deadlines, compliance risks, and potential violations. You extract critical dates, assess risk levels, and recommend appropriate stakeholder notifications."
+        }
+      },
+      "id": "5151b07b-bcef-4211-9d89-917f7210ede8",
+      "name": "Contract Risk Analyzer",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -1888,
+        5808
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.recommended_action }}",
+                    "rightValue": "notify_legal",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Notify Legal"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.recommended_action }}",
+                    "rightValue": "notify_hr",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Notify HR"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.recommended_action }}",
+                    "rightValue": "notify_finance",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Notify Finance"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.recommended_action }}",
+                    "rightValue": "create_compliance_task",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Create Compliance Task"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.recommended_action }}",
+                    "rightValue": "escalate_management",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Escalate Management"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.recommended_action }}",
+                    "rightValue": "ignore",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Ignore"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f393a018-23d6-4f62-8839-64429a6ff9dd",
+      "name": "Route by Action1",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -1536,
+        5744
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "legal-alerts@yourcompany.com",
+        "toEmail": "legal@yourcompany.com",
+        "subject": "={{ '⚖️ Legal Review Required: ' + $json.document_type + ' - ' + $json.risk_level + ' Risk' }}",
+        "html": "=<!DOCTYPE html>\n<html>\n<head>\n<style>\nbody { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }\n.container { max-width: 700px; margin: 0 auto; padding: 20px; }\n.header { background-color: #d32f2f; color: white; padding: 20px; text-align: center; }\n.content { padding: 30px; background-color: #f9f9f9; }\n.risk-box { background-color: #fff; border-left: 4px solid #d32f2f; padding: 15px; margin: 15px 0; }\n.section { margin: 20px 0; }\n.footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }\n</style>\n</head>\n<body>\n<div class=\"container\">\n<div class=\"header\">\n<h1>⚖️ Legal Review Required</h1>\n</div>\n<div class=\"content\">\n<div class=\"risk-box\">\n<h2>Document Risk Assessment</h2>\n<p><strong>Document Type:</strong> {{ $json.document_type }}</p>\n<p><strong>Risk Level:</strong> {{ $json.risk_level }}</p>\n<p><strong>Urgency:</strong> {{ $json.urgency }}</p>\n<p><strong>Analyzed:</strong> {{ $('Workflow Configuration2').item.json.timestamp }}</p>\n</div>\n\n<div class=\"section\">\n<h3>Key Obligations</h3>\n<ul>\n{{ $json.key_obligations.map(o => '<li>' + o + '</li>').join('') }}\n</ul>\n</div>\n\n<div class=\"section\">\n<h3>Critical Dates</h3>\n<ul>\n{{ $json.critical_dates.map(d => '<li><strong>' + d.date + '</strong> (' + d.days_until + ' days): ' + d.description + '</li>').join('') }}\n</ul>\n</div>\n\n<div class=\"section\">\n<h3>Compliance Issues</h3>\n<ul>\n{{ $json.compliance_issues.map(i => '<li>' + i + '</li>').join('') }}\n</ul>\n</div>\n\n<div class=\"section\">\n<h3>Recommended Action</h3>\n<p>{{ $json.action_reason }}</p>\n</div>\n\n<p><strong>Please review this document immediately and take appropriate action.</strong></p>\n</div>\n<div class=\"footer\">\n<p>Automated alert from Contract & Policy Watchdog System</p>\n</div>\n</div>\n</body>\n</html>",
+        "options": {}
+      },
+      "id": "126aee1c-8b4e-4fa5-80d3-d00bacae7a65",
+      "name": "Send Legal Alert",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        -1312,
+        5328
+      ],
+      "webhookId": "1226dfc7-86d8-4238-a5df-26309c93a882"
+    },
+    {
+      "parameters": {
+        "fromEmail": "hr-alerts@yourcompany.com",
+        "toEmail": "hr@yourcompany.com",
+        "subject": "={{ '👥 HR Policy Review Required: ' + $json.document_type + ' - ' + $json.urgency + ' Priority' }}",
+        "html": "=<!DOCTYPE html>\n<html>\n<head>\n<style>\nbody { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }\n.container { max-width: 700px; margin: 0 auto; padding: 20px; }\n.header { background-color: #1976d2; color: white; padding: 20px; text-align: center; }\n.content { padding: 30px; background-color: #f9f9f9; }\n.alert-box { background-color: #fff; border-left: 4px solid #1976d2; padding: 15px; margin: 15px 0; }\n.section { margin: 20px 0; }\n.footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }\n</style>\n</head>\n<body>\n<div class=\"container\">\n<div class=\"header\">\n<h1>👥 HR Policy Review Required</h1>\n</div>\n<div class=\"content\">\n<div class=\"alert-box\">\n<h2>Policy Assessment</h2>\n<p><strong>Document Type:</strong> {{ $json.document_type }}</p>\n<p><strong>Risk Level:</strong> {{ $json.risk_level }}</p>\n<p><strong>Urgency:</strong> {{ $json.urgency }}</p>\n</div>\n\n<div class=\"section\">\n<h3>Key Obligations</h3>\n<ul>\n{{ $json.key_obligations.map(o => '<li>' + o + '</li>').join('') }}\n</ul>\n</div>\n\n<div class=\"section\">\n<h3>Critical Dates</h3>\n<ul>\n{{ $json.critical_dates.map(d => '<li><strong>' + d.date + '</strong> (' + d.days_until + ' days): ' + d.description + '</li>').join('') }}\n</ul>\n</div>\n\n<div class=\"section\">\n<h3>Compliance Issues</h3>\n<ul>\n{{ $json.compliance_issues.map(i => '<li>' + i + '</li>').join('') }}\n</ul>\n</div>\n\n<div class=\"section\">\n<h3>Action Required</h3>\n<p>{{ $json.action_reason }}</p>\n</div>\n</div>\n<div class=\"footer\">\n<p>Automated alert from Contract & Policy Watchdog System</p>\n</div>\n</div>\n</body>\n</html>",
+        "options": {}
+      },
+      "id": "7c12e3f1-5548-41f4-a6be-8beda52da4ec",
+      "name": "Send HR Alert",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        -1312,
+        5520
+      ],
+      "webhookId": "98a3eba7-55b6-42cd-ad0b-231fc5e8cbaa"
+    },
+    {
+      "parameters": {
+        "fromEmail": "finance-alerts@yourcompany.com",
+        "toEmail": "finance@yourcompany.com",
+        "subject": "={{ '💰 Finance Review Required: ' + $json.document_type + ' - ' + $json.risk_level + ' Risk' }}",
+        "html": "=<!DOCTYPE html>\n<html>\n<head>\n<style>\nbody { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }\n.container { max-width: 700px; margin: 0 auto; padding: 20px; }\n.header { background-color: #388e3c; color: white; padding: 20px; text-align: center; }\n.content { padding: 30px; background-color: #f9f9f9; }\n.finance-box { background-color: #fff; border-left: 4px solid #388e3c; padding: 15px; margin: 15px 0; }\n.section { margin: 20px 0; }\n.footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }\n</style>\n</head>\n<body>\n<div class=\"container\">\n<div class=\"header\">\n<h1>💰 Finance Review Required</h1>\n</div>\n<div class=\"content\">\n<div class=\"finance-box\">\n<h2>Financial Obligation Assessment</h2>\n<p><strong>Document Type:</strong> {{ $json.document_type }}</p>\n<p><strong>Risk Level:</strong> {{ $json.risk_level }}</p>\n<p><strong>Urgency:</strong> {{ $json.urgency }}</p>\n</div>\n\n<div class=\"section\">\n<h3>Key Financial Obligations</h3>\n<ul>\n{{ $json.key_obligations.map(o => '<li>' + o + '</li>').join('') }}\n</ul>\n</div>\n\n<div class=\"section\">\n<h3>Critical Payment Dates</h3>\n<ul>\n{{ $json.critical_dates.map(d => '<li><strong>' + d.date + '</strong> (' + d.days_until + ' days): ' + d.description + '</li>').join('') }}\n</ul>\n</div>\n\n<div class=\"section\">\n<h3>Compliance Issues</h3>\n<ul>\n{{ $json.compliance_issues.map(i => '<li>' + i + '</li>').join('') }}\n</ul>\n</div>\n\n<div class=\"section\">\n<h3>Action Required</h3>\n<p>{{ $json.action_reason }}</p>\n</div>\n</div>\n<div class=\"footer\">\n<p>Automated alert from Contract & Policy Watchdog System</p>\n</div>\n</div>\n</body>\n</html>",
+        "options": {}
+      },
+      "id": "6e02bf6c-436b-4716-b478-aae58f9c758f",
+      "name": "Send Finance Alert1",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        -1312,
+        5712
+      ],
+      "webhookId": "cbb5ed65-6309-4824-b441-8ad43766c29b"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://your-jira-instance.atlassian.net/rest/api/3/issue",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_JIRA_API_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  \"fields\": {\n    \"project\": {\n      \"key\": \"COMPLIANCE\"\n    },\n    \"summary\": \"Compliance Task: \" + $json.document_type + \" - \" + $json.urgency,\n    \"description\": {\n      \"type\": \"doc\",\n      \"version\": 1,\n      \"content\": [\n        {\n          \"type\": \"paragraph\",\n          \"content\": [\n            {\n              \"type\": \"text\",\n              \"text\": \"Compliance task created from Contract & Policy Watchdog\\n\\n\"\n            },\n            {\n              \"type\": \"text\",\n              \"text\": \"Risk Level: \" + $json.risk_level + \"\\n\",\n              \"marks\": [{\"type\": \"strong\"}]\n            },\n            {\n              \"type\": \"text\",\n              \"text\": \"Urgency: \" + $json.urgency + \"\\n\\n\"\n            },\n            {\n              \"type\": \"text\",\n              \"text\": \"Key Obligations:\\n\" + $json.key_obligations.join('\\n') + \"\\n\\n\"\n            },\n            {\n              \"type\": \"text\",\n              \"text\": \"Action Required:\\n\" + $json.action_reason\n            }\n          ]\n        }\n      ]\n    },\n    \"issuetype\": {\n      \"name\": \"Task\"\n    },\n    \"priority\": {\n      \"name\": $json.urgency === 'critical' ? 'Highest' : ($json.urgency === 'high' ? 'High' : 'Medium')\n    }\n  }\n} }}",
+        "options": {}
+      },
+      "id": "c883d122-f118-42bc-a73f-ae003c3d4f42",
+      "name": "Create Task in Jira",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -1312,
+        5904
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "critical-alerts@yourcompany.com",
+        "toEmail": "executives@yourcompany.com",
+        "subject": "={{ '🚨 CRITICAL: Contract/Policy Issue Requires Executive Attention - ' + $json.risk_level }}",
+        "emailFormat": "text",
+        "text": "=EXECUTIVE ESCALATION - CRITICAL CONTRACT/POLICY ISSUE\n\nA critical contract or policy issue has been identified that requires immediate executive attention.\n\n=== DOCUMENT DETAILS ===\nDocument Type: {{ $json.document_type }}\nRisk Level: {{ $json.risk_level }}\nUrgency: {{ $json.urgency }}\nAnalyzed: {{ $('Workflow Configuration2').item.json.timestamp }}\n\n=== KEY OBLIGATIONS ===\n{{ $json.key_obligations.map((o, i) => (i + 1) + '. ' + o).join('\\n') }}\n\n=== CRITICAL DATES ===\n{{ $json.critical_dates.map(d => '• ' + d.date + ' (' + d.days_until + ' days): ' + d.description).join('\\n') }}\n\n=== COMPLIANCE ISSUES ===\n{{ $json.compliance_issues.map((i, idx) => (idx + 1) + '. ' + i).join('\\n') }}\n\n=== IMMEDIATE ACTION REQUIRED ===\n{{ $json.action_reason }}\n\n=== RECOMMENDATION ===\nThis matter requires immediate executive review and decision-making.\n\nThis is an automated critical alert from the Contract & Policy Watchdog System.\n\n---\nFor questions, contact: legal@yourcompany.com",
+        "options": {}
+      },
+      "id": "2e1c7ce3-7d9e-4f97-ad8b-6d7f66b479e2",
+      "name": "Escalate to Executives1",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        -1312,
+        6096
+      ],
+      "webhookId": "cea9e4de-5cd9-43ca-9826-907bc89e4c23"
+    },
+    {
+      "parameters": {},
+      "id": "9cf9fb19-e6af-4a0c-bdc3-fc56e94ab944",
+      "name": "No Action Required1",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -1312,
+        6288
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "id": "2228bb65-5d96-42b6-9762-365fab54957f",
+      "name": "Weekly Employee Risk Check",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -3008,
+        6992
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "hr-event-webhook",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "0df7663b-817e-4785-936e-e9dba8d9743b",
+      "name": "HR Event Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -3008,
+        7184
+      ],
+      "webhookId": "e4853af0-3d83-4d04-9cd6-838b8b29e8fa"
+    },
+    {
+      "parameters": {},
+      "id": "86f0eb24-0434-4588-bbaa-598ac7c95060",
+      "name": "Merge Triggers1",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -2784,
+        7088
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "trigger_source",
+              "value": "={{ $json.body ? 'webhook' : 'schedule' }}",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "event_type",
+              "value": "={{ $json.body?.event_type || 'weekly_check' }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "employee_id",
+              "value": "={{ $json.body?.employee_id || 'ALL_EMPLOYEES' }}",
+              "type": "string"
+            },
+            {
+              "id": "id-4",
+              "name": "timestamp",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "53838f73-1d5b-4353-ba8a-776fbcc4f5fe",
+      "name": "Workflow Configuration3",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -2560,
+        7088
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.hr-system.example.com/v1/employees/metrics",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "employee_id",
+              "value": "={{ $('Workflow Configuration3').item.json.employee_id }}"
+            },
+            {
+              "name": "metrics",
+              "value": "attendance,leave,performance,overtime"
+            },
+            {
+              "name": "period_days",
+              "value": "90"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_HR_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f0e3c2c5-5f42-4a11-9901-79969be8e431",
+      "name": "Fetch HR System Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -2336,
+        6896
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.project-management.example.com/v1/tasks/employee-metrics",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "employee_id",
+              "value": "={{ $('Workflow Configuration3').item.json.employee_id }}"
+            },
+            {
+              "name": "include",
+              "value": "delays,missed_deadlines,workload"
+            },
+            {
+              "name": "period_days",
+              "value": "90"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_PM_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "22aec900-5da3-45ce-a81e-ebab15ee3dd5",
+      "name": "Fetch Project Management Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -2336,
+        7088
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.communication-analytics.example.com/v1/sentiment",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "employee_id",
+              "value": "={{ $('Workflow Configuration3').item.json.employee_id }}"
+            },
+            {
+              "name": "channels",
+              "value": "email,chat,meetings"
+            },
+            {
+              "name": "period_days",
+              "value": "90"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_COMM_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d2d37ab4-8733-49b5-9c78-3ccd1fe8f9de",
+      "name": "Fetch Communication Signals",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -2336,
+        7280
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "options": {}
+      },
+      "id": "3f401aa0-2864-4db1-a433-30f2c716bdbd",
+      "name": "Combine Employee Data",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -2112,
+        6992
+      ]
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"employee_risk_level\": {\n      \"type\": \"string\",\n      \"enum\": [\"low\", \"medium\", \"high\", \"critical\"],\n      \"description\": \"Overall employee risk level\"\n    },\n    \"burnout_score\": {\n      \"type\": \"number\",\n      \"minimum\": 0,\n      \"maximum\": 100,\n      \"description\": \"Burnout risk score from 0 to 100\"\n    },\n    \"attrition_probability\": {\n      \"type\": \"number\",\n      \"minimum\": 0,\n      \"maximum\": 1,\n      \"description\": \"Probability of employee leaving (0.0 to 1.0)\"\n    },\n    \"sentiment_trend\": {\n      \"type\": \"string\",\n      \"enum\": [\"improving\", \"stable\", \"declining\", \"critical\"],\n      \"description\": \"Employee sentiment trajectory\"\n    },\n    \"key_risk_factors\": {\n      \"type\": \"array\",\n      \"items\": {\"type\": \"string\"},\n      \"description\": \"Array of identified risk factors\"\n    },\n    \"recommended_action\": {\n      \"type\": \"string\",\n      \"enum\": [\"notify_hr\", \"notify_manager\", \"schedule_checkin\", \"trigger_engagement_survey\", \"escalate_management\", \"ignore\"],\n      \"description\": \"Recommended preventive action\"\n    },\n    \"action_reason\": {\n      \"type\": \"string\",\n      \"description\": \"Explanation for the recommended action\"\n    }\n  },\n  \"required\": [\"employee_risk_level\", \"burnout_score\", \"attrition_probability\", \"sentiment_trend\", \"key_risk_factors\", \"recommended_action\", \"action_reason\"]\n}"
+      },
+      "id": "065e1676-18c6-4b26-bc2b-0fb26d270890",
+      "name": "Employee Risk Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -1880,
+        7216
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "id",
+          "value": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "0cd20223-c343-44d2-85a8-e8354e6e2dbf",
+      "name": "OpenAI Chat Model3",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -1752,
+        7216
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Employee Risk Analysis\n\nHR System Data:\n{{ JSON.stringify($('Fetch HR System Data').item.json, null, 2) }}\n\nProject Management Data:\n{{ JSON.stringify($('Fetch Project Management Data').item.json, null, 2) }}\n\nCommunication Signals:\n{{ JSON.stringify($('Fetch Communication Signals').item.json, null, 2) }}\n\nAnalyze this employee data to detect burnout, disengagement, and attrition risk:\n\n1. EMPLOYEE_RISK_LEVEL: Classify overall risk (low, medium, high, critical) based on:\n   - Attendance patterns and leave usage\n   - Performance trends\n   - Overtime and workload\n   - Task delays and missed deadlines\n   - Communication sentiment and engagement\n\n2. BURNOUT_SCORE: Rate burnout risk from 0-100 considering:\n   - Excessive overtime hours\n   - Declining performance despite high effort\n   - Increased sick leave\n   - Negative sentiment in communications\n   - Missed deadlines due to overload\n\n3. ATTRITION_PROBABILITY: Calculate likelihood of employee leaving (0.0 to 1.0) based on:\n   - Disengagement signals\n   - Performance decline\n   - Reduced communication\n   - Historical patterns\n\n4. SENTIMENT_TREND: Classify sentiment trajectory:\n   - improving: Positive engagement trend\n   - stable: Consistent engagement\n   - declining: Decreasing engagement\n   - critical: Severe disengagement\n\n5. KEY_RISK_FACTORS: Identify specific concerns:\n   - Silent disengagement\n   - Burnout indicators\n   - Performance issues\n   - Work-life balance problems\n   - Team dynamics issues\n\n6. RECOMMENDED_ACTION: Choose the most appropriate intervention:\n   - notify_hr: HR team awareness needed\n   - notify_manager: Manager should intervene\n   - schedule_checkin: Schedule 1-on-1 meeting\n   - trigger_engagement_survey: Send targeted survey\n   - escalate_management: Executive attention required\n   - ignore: No action needed\n\n7. ACTION_REASON: Explain why this intervention is recommended and what specific steps should be taken",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an HR Analytics AI that detects employee burnout, disengagement, and attrition risk by analyzing behavioral patterns, performance metrics, and sentiment signals. You provide early warning detection and recommend preventive interventions."
+        }
+      },
+      "id": "1503ebe8-ff24-468b-aa81-5b8ac8b8ce03",
+      "name": "Employee Risk Analyzer",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -1888,
+        6992
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.recommended_action }}",
+                    "rightValue": "notify_hr",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Notify HR"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.recommended_action }}",
+                    "rightValue": "notify_manager",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Notify Manager"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.recommended_action }}",
+                    "rightValue": "schedule_checkin",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Schedule Check-in"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.recommended_action }}",
+                    "rightValue": "trigger_engagement_survey",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Trigger Survey"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.recommended_action }}",
+                    "rightValue": "escalate_management",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Escalate Management"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.recommended_action }}",
+                    "rightValue": "ignore",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Ignore"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6996c982-a9c2-41a8-aa1f-e7341c80c541",
+      "name": "Route by Risk and Action",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -1536,
+        6928
+      ]
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_HR_SLACK_CHANNEL"
+        },
+        "text": "=🚨 Employee Risk Alert - HR Team Notification\n\n*Employee:* {{ $('Combine Employee Data').item.json.employee_name || 'Unknown' }}\n*Risk Level:* {{ $json.employee_risk_level }}\n*Burnout Score:* {{ $json.burnout_score }}/100\n*Attrition Probability:* {{ ($json.attrition_probability * 100).toFixed(0) }}%\n*Sentiment Trend:* {{ $json.sentiment_trend }}\n\n*Key Risk Factors:*\n{{ $json.key_risk_factors.map(f => '• ' + f).join('\\n') }}\n\n*Recommended Action:*\n{{ $json.recommended_action }}\n\n*Action Reason:*\n{{ $json.action_reason }}\n\n*Analysis Timestamp:* {{ $('Workflow Configuration3').item.json.timestamp }}\n\n---\n_Detected by HR Employee Risk & Engagement Monitor_",
+        "otherOptions": {}
+      },
+      "id": "17d6462d-4544-4d9e-933c-74e81145e227",
+      "name": "Send HR Slack Alert",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        -1312,
+        6512
+      ],
+      "webhookId": "a76c7108-acf4-46e0-9c89-b14de4e49e07"
+    },
+    {
+      "parameters": {
+        "fromEmail": "hr-alerts@yourcompany.com",
+        "toEmail": "={{ $('Combine Employee Data').item.json.manager_email }}",
+        "subject": "=Employee Risk Alert: Action Required for {{ $('Combine Employee Data').item.json.employee_name }}",
+        "html": "=<!DOCTYPE html>\n<html>\n<head>\n<style>\nbody { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }\n.container { max-width: 700px; margin: 0 auto; padding: 20px; }\n.header { background-color: #ff9800; color: white; padding: 20px; text-align: center; }\n.content { padding: 30px; background-color: #f9f9f9; }\n.risk-box { background-color: #fff; border-left: 4px solid #ff9800; padding: 15px; margin: 15px 0; }\n.section { margin: 20px 0; }\n.footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }\n</style>\n</head>\n<body>\n<div class=\"container\">\n<div class=\"header\">\n<h1>👥 Employee Risk Alert</h1>\n</div>\n<div class=\"content\">\n<p>Dear Manager,</p>\n<p>Our HR analytics system has detected potential risk indicators for one of your team members that require your attention.</p>\n\n<div class=\"risk-box\">\n<h2>Risk Assessment</h2>\n<p><strong>Employee:</strong> {{ $('Combine Employee Data').item.json.employee_name }}</p>\n<p><strong>Risk Level:</strong> {{ $json.employee_risk_level }}</p>\n<p><strong>Burnout Score:</strong> {{ $json.burnout_score }}/100</p>\n<p><strong>Attrition Probability:</strong> {{ ($json.attrition_probability * 100).toFixed(0) }}%</p>\n<p><strong>Sentiment Trend:</strong> {{ $json.sentiment_trend }}</p>\n</div>\n\n<div class=\"section\">\n<h3>Key Risk Factors</h3>\n<ul>\n{{ $json.key_risk_factors.map(f => '<li>' + f + '</li>').join('') }}\n</ul>\n</div>\n\n<div class=\"section\">\n<h3>Recommended Action</h3>\n<p><strong>{{ $json.recommended_action }}</strong></p>\n<p>{{ $json.action_reason }}</p>\n</div>\n\n<p>Please take appropriate action to address these concerns. Early intervention can prevent disengagement and potential attrition.</p>\n\n<p>If you need support or guidance, please contact the HR team.</p>\n\n<p>Best regards,<br>\n<strong>HR Team</strong></p>\n</div>\n<div class=\"footer\">\n<p>Automated alert from HR Employee Risk & Engagement Monitor</p>\n</div>\n</div>\n</body>\n</html>",
+        "options": {}
+      },
+      "id": "23823924-2b75-4e7c-847c-ed97769044db",
+      "name": "Notify Manager Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        -1312,
+        6704
+      ],
+      "webhookId": "e00a52ba-599a-4c53-b4d7-70a544a67586"
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "mode": "id",
+          "value": "primary"
+        },
+        "start": "={{ $now.plus({ days: 2 }).set({ hour: 14, minute: 0 }).toISO() }}",
+        "end": "={{ $now.plus({ days: 2 }).set({ hour: 15, minute: 0 }).toISO() }}",
+        "additionalFields": {
+          "attendees": "={{ $('Combine Employee Data').item.json.manager_email + ',' + $('Combine Employee Data').item.json.employee_email }}",
+          "description": "Scheduled check-in meeting to discuss wellbeing and engagement",
+          "summary": "={{ 'Employee Check-in: ' + $('Combine Employee Data').item.json.employee_name }}"
+        }
+      },
+      "id": "06aad744-63dd-46b0-82f4-83d18b503f60",
+      "name": "Schedule Check-in Meeting",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        -1312,
+        6896
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "hr-engagement@yourcompany.com",
+        "toEmail": "={{ $('Combine Employee Data').item.json.employee_email }}",
+        "subject": "We Value Your Feedback - Quick Engagement Survey",
+        "html": "=<!DOCTYPE html>\n<html>\n<head>\n<style>\nbody { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }\n.container { max-width: 600px; margin: 0 auto; padding: 20px; }\n.header { background-color: #2196f3; color: white; padding: 20px; text-align: center; }\n.content { padding: 30px; background-color: #f9f9f9; }\n.cta-button { display: inline-block; background-color: #2196f3; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }\n.footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }\n</style>\n</head>\n<body>\n<div class=\"container\">\n<div class=\"header\">\n<h1>💬 We Value Your Feedback</h1>\n</div>\n<div class=\"content\">\n<p>Dear {{ $('Combine Employee Data').item.json.employee_name }},</p>\n\n<p>Your experience and wellbeing matter to us. We'd love to hear your thoughts on your current role, team dynamics, and overall engagement.</p>\n\n<p>This quick 5-minute survey will help us understand how we can better support you and create an even better work environment.</p>\n\n<center>\n<a href=\"https://yourcompany.com/engagement-survey?id={{ $('Combine Employee Data').item.json.employee_id }}\" class=\"cta-button\">Take the Survey</a>\n</center>\n\n<p>Your responses are confidential and will be used to improve our workplace culture and support systems.</p>\n\n<p>Thank you for taking the time to share your feedback.</p>\n\n<p>Best regards,<br>\n<strong>HR Team</strong></p>\n</div>\n<div class=\"footer\">\n<p>Questions? Contact us at hr@yourcompany.com</p>\n</div>\n</div>\n</body>\n</html>",
+        "options": {}
+      },
+      "id": "8bd103a9-02d4-4da4-b9a9-7e2f9ab8ed4f",
+      "name": "Send Engagement Survey",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        -1312,
+        7088
+      ],
+      "webhookId": "6ba3366d-fe3c-49f0-92e2-c9a14fbda9b7"
+    },
+    {
+      "parameters": {
+        "fromEmail": "critical-hr-alerts@yourcompany.com",
+        "toEmail": "executives@yourcompany.com",
+        "subject": "🚨 CRITICAL: Employee Attrition Risk - Immediate Action Required",
+        "emailFormat": "text",
+        "text": "=EXECUTIVE ESCALATION - CRITICAL EMPLOYEE ATTRITION RISK\n\nA critical employee risk situation has been identified that requires immediate executive attention.\n\n=== EMPLOYEE DETAILS ===\nEmployee: {{ $('Combine Employee Data').item.json.employee_name }}\nDepartment: {{ $('Combine Employee Data').item.json.department }}\nRole: {{ $('Combine Employee Data').item.json.role }}\nTenure: {{ $('Combine Employee Data').item.json.tenure_years }} years\n\n=== RISK ASSESSMENT ===\nRisk Level: {{ $json.employee_risk_level }}\nBurnout Score: {{ $json.burnout_score }}/100\nAttrition Probability: {{ ($json.attrition_probability * 100).toFixed(0) }}%\nSentiment Trend: {{ $json.sentiment_trend }}\n\n=== KEY RISK FACTORS ===\n{{ $json.key_risk_factors.map((f, i) => (i + 1) + '. ' + f).join('\\n') }}\n\n=== RECOMMENDED ACTION ===\n{{ $json.recommended_action }}\n\n=== ACTION REASON ===\n{{ $json.action_reason }}\n\n=== IMMEDIATE STEPS REQUIRED ===\n1. Executive review of employee situation\n2. Urgent intervention planning\n3. Retention strategy development\n4. Resource allocation for support\n\nThis employee represents significant organizational knowledge and value. Immediate action is critical to prevent potential departure.\n\nThis is an automated critical alert from the HR Employee Risk & Engagement Monitor.\n\n---\nFor questions, contact: hr@yourcompany.com\nAnalysis Timestamp: {{ $('Workflow Configuration3').item.json.timestamp }}",
+        "options": {}
+      },
+      "id": "1b916366-b7d2-49cd-bcea-a3d812fac50b",
+      "name": "Escalate to Executive Team",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        -1312,
+        7280
+      ],
+      "webhookId": "31f6cfbb-2f6a-43d4-ae1b-b240ee821fa4"
+    },
+    {
+      "parameters": {},
+      "id": "6daff111-9f2a-4813-b91f-c6b24d9698e1",
+      "name": "No Action Required2",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -1312,
+        7472
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Signal Webhook": {
+      "main": [
+        [
+          {
+            "node": "Workflow Configuration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Workflow Configuration": {
+      "main": [
+        [
+          {
+            "node": "AI Signal Analyzer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Signal Analyzer",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Signal Analyzer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Signal Analyzer": {
+      "main": [
+        [
+          {
+            "node": "Route by Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Action": {
+      "main": [
+        [
+          {
+            "node": "Send Slack Notification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create CRM Task",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Escalate to Management",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Open Support Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily Revenue Check": {
+      "main": [
+        [
+          {
+            "node": "Merge Triggers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Real-time Payment Events": {
+      "main": [
+        [
+          {
+            "node": "Merge Triggers",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Triggers": {
+      "main": [
+        [
+          {
+            "node": "Workflow Configuration1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Workflow Configuration1": {
+      "main": [
+        [
+          {
+            "node": "Fetch Payment Data",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch CRM Data",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Subscription Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Payment Data": {
+      "main": [
+        [
+          {
+            "node": "Combine All Data Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch CRM Data": {
+      "main": [
+        [
+          {
+            "node": "Combine All Data Sources",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Combine All Data Sources": {
+      "main": [
+        [
+          {
+            "node": "Revenue Leak Analyzer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Revenue Leak Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Revenue Leak Analyzer",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Revenue Leak Analyzer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Revenue Leak Analyzer": {
+      "main": [
+        [
+          {
+            "node": "Route by Recommended Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Recommended Action": {
+      "main": [
+        [
+          {
+            "node": "Retry Payment Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Finance Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Sales Task in CRM",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Retention Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Escalate to Executives",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Action Required",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Merge All Triggers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily Contract Check": {
+      "main": [
+        [
+          {
+            "node": "Merge All Triggers",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Contract Upload Webhook": {
+      "main": [
+        [
+          {
+            "node": "Merge All Triggers",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge All Triggers": {
+      "main": [
+        [
+          {
+            "node": "Workflow Configuration2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Workflow Configuration2": {
+      "main": [
+        [
+          {
+            "node": "Download Contract from Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Contract from Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Extract Text from Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Text from Document": {
+      "main": [
+        [
+          {
+            "node": "Contract Risk Analyzer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Contract Analysis Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Contract Risk Analyzer",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Contract Risk Analyzer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Contract Risk Analyzer": {
+      "main": [
+        [
+          {
+            "node": "Route by Action1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Action1": {
+      "main": [
+        [
+          {
+            "node": "Send Legal Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send HR Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Finance Alert1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Task in Jira",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Escalate to Executives1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Action Required1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Weekly Employee Risk Check": {
+      "main": [
+        [
+          {
+            "node": "Merge Triggers1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HR Event Webhook": {
+      "main": [
+        [
+          {
+            "node": "Merge Triggers1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Triggers1": {
+      "main": [
+        [
+          {
+            "node": "Workflow Configuration3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Workflow Configuration3": {
+      "main": [
+        [
+          {
+            "node": "Fetch HR System Data",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Project Management Data",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Communication Signals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch HR System Data": {
+      "main": [
+        [
+          {
+            "node": "Combine Employee Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Project Management Data": {
+      "main": [
+        [
+          {
+            "node": "Combine Employee Data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Combine Employee Data": {
+      "main": [
+        [
+          {
+            "node": "Employee Risk Analyzer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Employee Risk Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Employee Risk Analyzer",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Employee Risk Analyzer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Employee Risk Analyzer": {
+      "main": [
+        [
+          {
+            "node": "Route by Risk and Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Risk and Action": {
+      "main": [
+        [
+          {
+            "node": "Send HR Slack Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notify Manager Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Schedule Check-in Meeting",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Engagement Survey",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Escalate to Executive Team",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Action Required2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "79b57b2f-425c-4c52-a19e-726252880cd6",
+  "meta": {
+    "instanceId": "241b798e45d31da326d6d61cb74091878e9e36afce779239b17a965bf800b1e9"
+  },
+  "id": "Jg-fF--JFV9omrN_2G_wT",
+  "tags": []
+}

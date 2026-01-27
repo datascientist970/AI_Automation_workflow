@@ -1,0 +1,1136 @@
+{
+  "name": "My workflow 3",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "signal-webhook",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "09263d17-3428-4c93-a916-b55564a1e9ff",
+      "name": "Signal Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1024,
+        288
+      ],
+      "webhookId": "69c80165-235d-47ee-a86b-6128402aefad"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "source",
+              "value": "={{ $json.body.source }}",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "channel",
+              "value": "={{ $json.body.channel }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "content",
+              "value": "={{ $json.body.content }}",
+              "type": "string"
+            },
+            {
+              "id": "id-4",
+              "name": "timestamp",
+              "value": "={{ $json.body.timestamp }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f1d8fb88-54a3-4423-8d5e-e94460b5d4d7",
+      "name": "Workflow Configuration",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -800,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n\t\"type\": \"object\",\n\t\"properties\": {\n\t\t\"intent\": {\n\t\t\t\"type\": \"string\",\n\t\t\t\"description\": \"The detected intent of the signal\"\n\t\t},\n\t\t\"urgency\": {\n\t\t\t\"type\": \"string\",\n\t\t\t\"description\": \"Urgency level: low, medium, high, critical\"\n\t\t},\n\t\t\"sentiment\": {\n\t\t\t\"type\": \"string\",\n\t\t\t\"description\": \"Sentiment: positive, neutral, negative\"\n\t\t},\n\t\t\"confidence_score\": {\n\t\t\t\"type\": \"number\",\n\t\t\t\"description\": \"Confidence score from 0 to 1\"\n\t\t},\n\t\t\"risk_flags\": {\n\t\t\t\"type\": \"array\",\n\t\t\t\"items\": {\n\t\t\t\t\"type\": \"string\"\n\t\t\t},\n\t\t\t\"description\": \"Array of identified risk flags\"\n\t\t},\n\t\t\"recommended_action\": {\n\t\t\t\"type\": \"string\",\n\t\t\t\"description\": \"Recommended action: notify_human, create_crm_task, escalate_management, or open_support_ticket\"\n\t\t}\n\t},\n\t\"required\": [\"intent\", \"urgency\", \"sentiment\", \"confidence_score\", \"risk_flags\", \"recommended_action\"]\n}"
+      },
+      "id": "d1baaa14-197f-40cb-81f9-9c31ca02c46f",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -568,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "id",
+          "value": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "93ae1a1b-d8f3-4478-9014-e2cbb069d8d8",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -440,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Signal Data:\nSource: {{ $json.source }}\nChannel: {{ $json.channel }}\nContent: {{ $json.content }}\nTimestamp: {{ $json.timestamp }}\n\nAnalyze this signal and provide a structured assessment:\n\n1. INTENT: What is the user trying to communicate or achieve?\n2. URGENCY: Rate as low, medium, high, or critical based on:\n   - Time-sensitive keywords (urgent, asap, immediately)\n   - Problem severity indicators\n   - Business impact signals\n3. SENTIMENT: Classify as positive, neutral, or negative\n4. CONFIDENCE_SCORE: Your confidence in this analysis (0.0 to 1.0)\n5. RISK_FLAGS: Identify any concerning elements:\n   - Security threats\n   - Compliance issues\n   - Customer churn risk\n   - Legal concerns\n   - Data breach indicators\n6. RECOMMENDED_ACTION: Choose the most appropriate action:\n   - notify_human: For general alerts requiring human awareness\n   - create_crm_task: For sales/customer success follow-ups\n   - escalate_management: For high-priority issues requiring leadership\n   - open_support_ticket: For technical support requests",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an AI Signal Analyzer that evaluates incoming signals and determines the appropriate action. Analyze signals for intent, urgency, sentiment, confidence, risk flags, and recommend the most appropriate action from: notify_human, create_crm_task, escalate_management, or open_support_ticket."
+        }
+      },
+      "id": "a84fd299-7c46-4552-9b0c-6e94ab93aa6d",
+      "name": "AI Signal Analyzer",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -576,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.recommended_action }}",
+                    "rightValue": "notify_human",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Notify Human"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.recommended_action }}",
+                    "rightValue": "create_crm_task",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Create CRM Task"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.recommended_action }}",
+                    "rightValue": "escalate_management",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Escalate Management"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.recommended_action }}",
+                    "rightValue": "open_support_ticket",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Open Support Ticket"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c59712db-75e6-467b-9d60-fbd5b7a27cd5",
+      "name": "Route by Action",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -224,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_SLACK_CHANNEL_ID"
+        },
+        "text": "=🚨 Signal Alert - Human Notification Required\n\n*Source:* {{ $('Workflow Configuration').item.json.source }}\n*Channel:* {{ $('Workflow Configuration').item.json.channel }}\n*Timestamp:* {{ $('Workflow Configuration').item.json.timestamp }}\n\n*Intent:* {{ $json.intent }}\n*Urgency:* {{ $json.urgency }}\n*Sentiment:* {{ $json.sentiment }}\n*Confidence:* {{ $json.confidence_score }}\n\n*Content:*\n{{ $('Workflow Configuration').item.json.content }}\n\n*Risk Flags:* {{ $json.risk_flags.join(', ') || 'None' }}",
+        "otherOptions": {}
+      },
+      "id": "82273327-c4af-4d1f-b924-785107a319f3",
+      "name": "Send Slack Notification",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "6d1f2cf1-a5b3-4fe6-8767-c175f360f72d"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://your-crm-api.example.com/api/tasks",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_CRM_API_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\"title\": \"Follow-up: \" + $('Workflow Configuration').item.json.source, \"description\": $('Workflow Configuration').item.json.content, \"priority\": $json.urgency, \"source\": $('Workflow Configuration').item.json.channel, \"metadata\": {\"intent\": $json.intent, \"sentiment\": $json.sentiment, \"confidence\": $json.confidence_score, \"risk_flags\": $json.risk_flags, \"timestamp\": $('Workflow Configuration').item.json.timestamp}} }}",
+        "options": {}
+      },
+      "id": "b6e16e44-1901-4d94-a3e3-8408f3b0346a",
+      "name": "Create CRM Task",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        0,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "alerts@yourcompany.com",
+        "toEmail": "management@yourcompany.com",
+        "subject": "=🚨 ESCALATION REQUIRED: {{ $json.urgency }} Priority Signal",
+        "emailFormat": "text",
+        "text": "=MANAGEMENT ESCALATION REQUIRED\n\nA signal has been flagged for immediate management attention.\n\n=== SIGNAL DETAILS ===\nSource: {{ $('Workflow Configuration').item.json.source }}\nChannel: {{ $('Workflow Configuration').item.json.channel }}\nTimestamp: {{ $('Workflow Configuration').item.json.timestamp }}\n\n=== AI ANALYSIS ===\nIntent: {{ $json.intent }}\nUrgency: {{ $json.urgency }}\nSentiment: {{ $json.sentiment }}\nConfidence Score: {{ $json.confidence_score }}\n\nRisk Flags: {{ $json.risk_flags.join(', ') || 'None identified' }}\n\n=== ORIGINAL CONTENT ===\n{{ $('Workflow Configuration').item.json.content }}\n\n=== RECOMMENDED ACTION ===\nImmediate review and response required.\n\nThis is an automated alert from the Signal Decision Engine.",
+        "options": {}
+      },
+      "id": "31dcb675-f7f9-467c-905c-a1edd0811fad",
+      "name": "Escalate to Management",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        384
+      ],
+      "webhookId": "d536c126-c8a2-441d-997b-02f926c8175a"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://your-helpdesk-api.example.com/api/tickets",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_HELPDESK_API_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\"subject\": \"Support Request: \" + $json.intent, \"description\": $('Workflow Configuration').item.json.content, \"priority\": $json.urgency, \"source\": $('Workflow Configuration').item.json.source, \"channel\": $('Workflow Configuration').item.json.channel, \"tags\": $json.risk_flags, \"metadata\": {\"sentiment\": $json.sentiment, \"confidence_score\": $json.confidence_score, \"timestamp\": $('Workflow Configuration').item.json.timestamp}} }}",
+        "options": {}
+      },
+      "id": "bf8016c3-520b-4fb9-adb9-0b80a0575750",
+      "name": "Open Support Ticket",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        0,
+        576
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "id": "df24ffbc-2ce1-4e4a-bf89-5bbd968f5fe1",
+      "name": "Daily Revenue Check",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1024,
+        1280
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "revenue-events",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "89205b21-167e-4513-b571-9612c5f67da8",
+      "name": "Real-time Payment Events",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1024,
+        1472
+      ],
+      "webhookId": "8740ed43-98d3-4540-bf70-e5b251d34d82"
+    },
+    {
+      "parameters": {},
+      "id": "41d19dba-8d34-4a59-89dd-522218fbec33",
+      "name": "Merge Triggers",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -800,
+        1376
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "trigger_source",
+              "value": "={{ $json.body ? 'webhook' : 'schedule' }}",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "event_type",
+              "value": "={{ $json.body?.event_type || 'scheduled_check' }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "timestamp",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "71611e78-3f96-4b96-8fe6-c3dce3595dfc",
+      "name": "Workflow Configuration1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -576,
+        1376
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.stripe.example.com/v1/payment_intents",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "failed"
+            },
+            {
+              "name": "created",
+              "value": "={{ $now.minus({ days: 7 }).toUnixInteger() }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_STRIPE_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d8d24bfc-8b7a-46f9-a874-acc5a50724ba",
+      "name": "Fetch Payment Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -352,
+        1184
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.crm.example.com/v1/leads",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "stale"
+            },
+            {
+              "name": "last_contact_before",
+              "value": "={{ $now.minus({ days: 14 }).toISO() }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_CRM_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6b9cc959-e203-4c5a-89c7-9039ca93cd39",
+      "name": "Fetch CRM Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -352,
+        1376
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://api.billing.example.com/v1/subscriptions",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "at_risk"
+            },
+            {
+              "name": "renewal_within_days",
+              "value": "30"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_BILLING_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bdf3df4f-124a-4d9b-a091-6c856a80c198",
+      "name": "Fetch Subscription Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -352,
+        1568
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "options": {}
+      },
+      "id": "a539d12b-7bde-41de-a346-fc99cc1184c7",
+      "name": "Combine All Data Sources",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -128,
+        1280
+      ]
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"leak_type\": {\n      \"type\": \"string\",\n      \"enum\": [\"failed_payment\", \"abandoned_lead\", \"missed_follow_up\", \"renewal_risk\", \"churn_detected\", \"unknown\"],\n      \"description\": \"Type of revenue leak detected\"\n    },\n    \"risk_level\": {\n      \"type\": \"string\",\n      \"enum\": [\"low\", \"medium\", \"high\", \"critical\"],\n      \"description\": \"Financial impact risk level\"\n    },\n    \"estimated_impact\": {\n      \"type\": \"string\",\n      \"description\": \"Estimated revenue at risk (e.g., $5,000)\"\n    },\n    \"confidence_score\": {\n      \"type\": \"number\",\n      \"minimum\": 0,\n      \"maximum\": 1,\n      \"description\": \"Confidence in analysis from 0.0 to 1.0\"\n    },\n    \"recommended_action\": {\n      \"type\": \"string\",\n      \"enum\": [\"retry_payment\", \"notify_finance\", \"create_sales_task\", \"trigger_retention_flow\", \"escalate_management\", \"ignore\"],\n      \"description\": \"Recommended corrective action\"\n    },\n    \"action_reason\": {\n      \"type\": \"string\",\n      \"description\": \"Explanation for the recommended action\"\n    }\n  },\n  \"required\": [\"leak_type\", \"risk_level\", \"estimated_impact\", \"confidence_score\", \"recommended_action\", \"action_reason\"]\n}"
+      },
+      "id": "f9e7a7b2-15fe-4531-88dd-64f3f8ae629b",
+      "name": "Revenue Leak Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        104,
+        1504
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "id",
+          "value": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "d1e0cc4b-fdd9-4eb9-9c2b-9e8c35213723",
+      "name": "OpenAI Chat Model1",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        232,
+        1504
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Revenue Data Analysis:\n\nPayment Data: {{ JSON.stringify($('Fetch Payment Data').item.json, null, 2) }}\n\nCRM Data: {{ JSON.stringify($('Fetch CRM Data').item.json, null, 2) }}\n\nSubscription Data: {{ JSON.stringify($('Fetch Subscription Data').item.json, null, 2) }}\n\nAnalyze this revenue data and identify potential revenue leaks:\n\n1. LEAK_TYPE: Classify the revenue leak:\n   - failed_payment: Payment processing failures\n   - abandoned_lead: Sales leads not followed up\n   - missed_follow_up: Customer touchpoints missed\n   - renewal_risk: Subscriptions at risk of not renewing\n   - churn_detected: Active churn signals detected\n   - unknown: Unable to classify\n\n2. RISK_LEVEL: Assess financial impact (low, medium, high, critical):\n   - Consider revenue amount at risk\n   - Customer lifetime value\n   - Urgency of intervention needed\n\n3. ESTIMATED_IMPACT: Quantify the potential revenue loss (e.g., $5,000, $50,000)\n\n4. CONFIDENCE_SCORE: Your confidence in this analysis (0.0 to 1.0)\n\n5. RECOMMENDED_ACTION: Choose the most appropriate action:\n   - retry_payment: Attempt to reprocess failed payment\n   - notify_finance: Alert finance team for manual review\n   - create_sales_task: Create follow-up task for sales team\n   - trigger_retention_flow: Initiate customer retention campaign\n   - escalate_management: Escalate to executive leadership\n   - ignore: No action needed\n\n6. ACTION_REASON: Explain why this action is recommended",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a Revenue Leak Detection AI that analyzes payment failures, stale leads, subscription churn risks, and missed renewals. Identify the leak type, assess financial impact, score confidence, and recommend corrective actions."
+        }
+      },
+      "id": "a46b8ef1-38c4-44a3-af9e-37f1c0976aa4",
+      "name": "Revenue Leak Analyzer",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        96,
+        1280
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.recommended_action }}",
+                    "rightValue": "retry_payment",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Retry Payment"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.recommended_action }}",
+                    "rightValue": "notify_finance",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Notify Finance"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.recommended_action }}",
+                    "rightValue": "create_sales_task",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Create Sales Task"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.recommended_action }}",
+                    "rightValue": "trigger_retention_flow",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Trigger Retention Flow"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.recommended_action }}",
+                    "rightValue": "escalate_management",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Escalate Management"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.recommended_action }}",
+                    "rightValue": "ignore",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Ignore"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "09422b5d-0b42-4df1-aa6f-578bb37866c7",
+      "name": "Route by Recommended Action",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        448,
+        1216
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.stripe.example.com/v1/payment_intents/retry",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_STRIPE_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"payment_intent_id\": $json.payment_intent_id } }}",
+        "options": {}
+      },
+      "id": "350d25ef-237e-4761-892b-7903b1f881a0",
+      "name": "Retry Payment Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        672,
+        800
+      ]
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_FINANCE_SLACK_CHANNEL"
+        },
+        "text": "=💰 Revenue Leak Alert - Finance Team Notification\n\n*Leak Type:* {{ $json.leak_type }}\n*Risk Level:* {{ $json.risk_level }}\n*Estimated Impact:* ${{ $json.estimated_impact }}\n\n*Customer Details:*\n• Customer ID: {{ $json.customer_id }}\n• Account Status: {{ $json.account_status }}\n• MRR: ${{ $json.mrr }}\n\n*Issue Description:*\n{{ $json.description }}\n\n*Root Cause:*\n{{ $json.root_cause }}\n\n*Recommended Action:*\n{{ $json.recommended_action }}\n\n*Confidence Score:* {{ $json.confidence_score }}\n\n---\n_Detected by Revenue Leak Analyzer at {{ $json.timestamp }}_",
+        "otherOptions": {}
+      },
+      "id": "3e00f027-714f-4c0a-95d6-22fdfe4c079c",
+      "name": "Send Finance Alert",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        672,
+        992
+      ],
+      "webhookId": "b0e75fdc-5d0b-462a-9ff0-cab7a1fa57f4"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.crm.example.com/v1/tasks",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_CRM_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  \"title\": \"Revenue Leak: \" + $json.leak_type,\n  \"description\": \"Action required: \" + $json.action_reason,\n  \"estimated_impact\": $json.estimated_impact,\n  \"leak_type\": $json.leak_type,\n  \"priority\": $json.urgency || \"medium\",\n  \"metadata\": {\n    \"confidence_score\": $json.confidence_score,\n    \"timestamp\": $now\n  }\n} }}",
+        "options": {}
+      },
+      "id": "b18e8175-4e9e-4130-a91f-ceb7aea92efb",
+      "name": "Create Sales Task in CRM",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        672,
+        1184
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "retention@yourcompany.com",
+        "toEmail": "={{ $('Combine All Data Sources').item.json.customer_email }}",
+        "subject": "We'd Love to Keep You - Special Retention Offer",
+        "html": "<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }\n    .container { max-width: 600px; margin: 0 auto; padding: 20px; }\n    .header { background-color: #4CAF50; color: white; padding: 20px; text-align: center; }\n    .content { padding: 30px; background-color: #f9f9f9; }\n    .offer-box { background-color: #fff; border: 2px solid #4CAF50; padding: 20px; margin: 20px 0; border-radius: 8px; }\n    .cta-button { display: inline-block; background-color: #4CAF50; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }\n    .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <div class=\"header\">\n      <h1>We Value Your Partnership</h1>\n    </div>\n    <div class=\"content\">\n      <p>Dear Valued Customer,</p>\n      \n      <p>We noticed some recent changes with your account, and we wanted to reach out personally. Your business means a lot to us, and we'd like to offer you something special to show our appreciation.</p>\n      \n      <div class=\"offer-box\">\n        <h2 style=\"color: #4CAF50; margin-top: 0;\">🎁 Exclusive Retention Offer</h2>\n        <p><strong>We're offering you:</strong></p>\n        <ul>\n          <li>20% discount on your next 3 months</li>\n          <li>Priority customer support</li>\n          <li>Free upgrade to premium features</li>\n          <li>Dedicated account manager</li>\n        </ul>\n        <p style=\"color: #666; font-size: 14px;\"><em>This offer is exclusively for you and expires in 7 days.</em></p>\n      </div>\n      \n      <p>We understand that circumstances change, and we're here to help make things work for you. If there's anything we can do to improve your experience, we'd love to hear from you.</p>\n      \n      <center>\n        <a href=\"https://yourcompany.com/retention-offer\" class=\"cta-button\">Claim Your Offer</a>\n      </center>\n      \n      <p>If you have any questions or would like to discuss your account, please don't hesitate to reach out. We're here to help.</p>\n      \n      <p>Thank you for being a valued customer.</p>\n      \n      <p>Best regards,<br>\n      <strong>The Customer Success Team</strong><br>\n      Your Company</p>\n    </div>\n    <div class=\"footer\">\n      <p>This email was sent to you because we value your business.<br>\n      If you have any questions, contact us at retention@yourcompany.com</p>\n    </div>\n  </div>\n</body>\n</html>",
+        "options": {}
+      },
+      "id": "22b587e8-12a3-494e-b241-7ac3831552bf",
+      "name": "Send Retention Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        672,
+        1376
+      ],
+      "webhookId": "45e7471f-d8f3-48dd-96cb-e443bfcf3215"
+    },
+    {
+      "parameters": {
+        "fromEmail": "alerts@yourcompany.com",
+        "toEmail": "executives@yourcompany.com",
+        "subject": "={{ '🚨 CRITICAL REVENUE LEAK: ' + $json.risk_level + ' - ' + $json.leak_type }}",
+        "emailFormat": "text",
+        "text": "=EXECUTIVE ALERT - CRITICAL REVENUE LEAK DETECTED\n\nA critical revenue leak has been identified and requires immediate executive attention.\n\n=== LEAK DETAILS ===\nLeak Type: {{ $json.leak_type }}\nRisk Level: {{ $json.risk_level }}\nEstimated Impact: {{ $json.estimated_impact }}\nConfidence Score: {{ $json.confidence_score }}\n\n=== IMMEDIATE ACTION REQUIRED ===\n{{ $json.recommended_action }}\n\n=== ANALYSIS SUMMARY ===\n{{ $json.analysis_summary }}\n\nThis is an automated critical alert from the Revenue Leak Detection System.\nImmediate review and action required.",
+        "options": {}
+      },
+      "id": "cf56a454-5559-4492-b26a-008ccbc0f05e",
+      "name": "Escalate to Executives",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        672,
+        1568
+      ],
+      "webhookId": "9136ee46-ccc7-4120-9a40-b2c059bb1850"
+    },
+    {
+      "parameters": {},
+      "id": "5bf6cd87-5334-4ba0-8866-28271684ce79",
+      "name": "No Action Required",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        672,
+        1760
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Signal Webhook": {
+      "main": [
+        [
+          {
+            "node": "Workflow Configuration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Workflow Configuration": {
+      "main": [
+        [
+          {
+            "node": "AI Signal Analyzer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Signal Analyzer",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Signal Analyzer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Signal Analyzer": {
+      "main": [
+        [
+          {
+            "node": "Route by Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Action": {
+      "main": [
+        [
+          {
+            "node": "Send Slack Notification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create CRM Task",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Escalate to Management",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Open Support Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily Revenue Check": {
+      "main": [
+        [
+          {
+            "node": "Merge Triggers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Real-time Payment Events": {
+      "main": [
+        [
+          {
+            "node": "Merge Triggers",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Triggers": {
+      "main": [
+        [
+          {
+            "node": "Workflow Configuration1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Workflow Configuration1": {
+      "main": [
+        [
+          {
+            "node": "Fetch Payment Data",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch CRM Data",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch Subscription Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Payment Data": {
+      "main": [
+        [
+          {
+            "node": "Combine All Data Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch CRM Data": {
+      "main": [
+        [
+          {
+            "node": "Combine All Data Sources",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Combine All Data Sources": {
+      "main": [
+        [
+          {
+            "node": "Revenue Leak Analyzer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Revenue Leak Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Revenue Leak Analyzer",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Revenue Leak Analyzer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Revenue Leak Analyzer": {
+      "main": [
+        [
+          {
+            "node": "Route by Recommended Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Recommended Action": {
+      "main": [
+        [
+          {
+            "node": "Retry Payment Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Finance Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Sales Task in CRM",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Retention Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Escalate to Executives",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Action Required",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "03469370-ec8b-4484-b59c-425a1caad35a",
+  "meta": {
+    "instanceId": "241b798e45d31da326d6d61cb74091878e9e36afce779239b17a965bf800b1e9"
+  },
+  "id": "Jg-fF--JFV9omrN_2G_wT",
+  "tags": []
+}

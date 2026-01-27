@@ -1,0 +1,422 @@
+{
+  "name": "My workflow 3",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "signal-webhook",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "09263d17-3428-4c93-a916-b55564a1e9ff",
+      "name": "Signal Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1024,
+        288
+      ],
+      "webhookId": "69c80165-235d-47ee-a86b-6128402aefad"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "source",
+              "value": "={{ $json.body.source }}",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "channel",
+              "value": "={{ $json.body.channel }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "content",
+              "value": "={{ $json.body.content }}",
+              "type": "string"
+            },
+            {
+              "id": "id-4",
+              "name": "timestamp",
+              "value": "={{ $json.body.timestamp }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f1d8fb88-54a3-4423-8d5e-e94460b5d4d7",
+      "name": "Workflow Configuration",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -800,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n\t\"type\": \"object\",\n\t\"properties\": {\n\t\t\"intent\": {\n\t\t\t\"type\": \"string\",\n\t\t\t\"description\": \"The detected intent of the signal\"\n\t\t},\n\t\t\"urgency\": {\n\t\t\t\"type\": \"string\",\n\t\t\t\"description\": \"Urgency level: low, medium, high, critical\"\n\t\t},\n\t\t\"sentiment\": {\n\t\t\t\"type\": \"string\",\n\t\t\t\"description\": \"Sentiment: positive, neutral, negative\"\n\t\t},\n\t\t\"confidence_score\": {\n\t\t\t\"type\": \"number\",\n\t\t\t\"description\": \"Confidence score from 0 to 1\"\n\t\t},\n\t\t\"risk_flags\": {\n\t\t\t\"type\": \"array\",\n\t\t\t\"items\": {\n\t\t\t\t\"type\": \"string\"\n\t\t\t},\n\t\t\t\"description\": \"Array of identified risk flags\"\n\t\t},\n\t\t\"recommended_action\": {\n\t\t\t\"type\": \"string\",\n\t\t\t\"description\": \"Recommended action: notify_human, create_crm_task, escalate_management, or open_support_ticket\"\n\t\t}\n\t},\n\t\"required\": [\"intent\", \"urgency\", \"sentiment\", \"confidence_score\", \"risk_flags\", \"recommended_action\"]\n}"
+      },
+      "id": "d1baaa14-197f-40cb-81f9-9c31ca02c46f",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -440,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "id",
+          "value": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "93ae1a1b-d8f3-4478-9014-e2cbb069d8d8",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -568,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Signal Data:\nSource: {{ $json.source }}\nChannel: {{ $json.channel }}\nContent: {{ $json.content }}\nTimestamp: {{ $json.timestamp }}\n\nAnalyze this signal and provide a structured assessment:\n\n1. INTENT: What is the user trying to communicate or achieve?\n2. URGENCY: Rate as low, medium, high, or critical based on:\n   - Time-sensitive keywords (urgent, asap, immediately)\n   - Problem severity indicators\n   - Business impact signals\n3. SENTIMENT: Classify as positive, neutral, or negative\n4. CONFIDENCE_SCORE: Your confidence in this analysis (0.0 to 1.0)\n5. RISK_FLAGS: Identify any concerning elements:\n   - Security threats\n   - Compliance issues\n   - Customer churn risk\n   - Legal concerns\n   - Data breach indicators\n6. RECOMMENDED_ACTION: Choose the most appropriate action:\n   - notify_human: For general alerts requiring human awareness\n   - create_crm_task: For sales/customer success follow-ups\n   - escalate_management: For high-priority issues requiring leadership\n   - open_support_ticket: For technical support requests",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an AI Signal Analyzer that evaluates incoming signals and determines the appropriate action. Analyze signals for intent, urgency, sentiment, confidence, risk flags, and recommend the most appropriate action from: notify_human, create_crm_task, escalate_management, or open_support_ticket."
+        }
+      },
+      "id": "a84fd299-7c46-4552-9b0c-6e94ab93aa6d",
+      "name": "AI Signal Analyzer",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -576,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.recommended_action }}",
+                    "rightValue": "notify_human",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Notify Human"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.recommended_action }}",
+                    "rightValue": "create_crm_task",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Create CRM Task"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.recommended_action }}",
+                    "rightValue": "escalate_management",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Escalate Management"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.recommended_action }}",
+                    "rightValue": "open_support_ticket",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Open Support Ticket"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c59712db-75e6-467b-9d60-fbd5b7a27cd5",
+      "name": "Route by Action",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -224,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_SLACK_CHANNEL_ID"
+        },
+        "text": "=🚨 Signal Alert - Human Notification Required\n\n*Source:* {{ $('Workflow Configuration').item.json.source }}\n*Channel:* {{ $('Workflow Configuration').item.json.channel }}\n*Timestamp:* {{ $('Workflow Configuration').item.json.timestamp }}\n\n*Intent:* {{ $json.intent }}\n*Urgency:* {{ $json.urgency }}\n*Sentiment:* {{ $json.sentiment }}\n*Confidence:* {{ $json.confidence_score }}\n\n*Content:*\n{{ $('Workflow Configuration').item.json.content }}\n\n*Risk Flags:* {{ $json.risk_flags.join(', ') || 'None' }}",
+        "otherOptions": {}
+      },
+      "id": "82273327-c4af-4d1f-b924-785107a319f3",
+      "name": "Send Slack Notification",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "6d1f2cf1-a5b3-4fe6-8767-c175f360f72d"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://your-crm-api.example.com/api/tasks",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_CRM_API_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\"title\": \"Follow-up: \" + $('Workflow Configuration').item.json.source, \"description\": $('Workflow Configuration').item.json.content, \"priority\": $json.urgency, \"source\": $('Workflow Configuration').item.json.channel, \"metadata\": {\"intent\": $json.intent, \"sentiment\": $json.sentiment, \"confidence\": $json.confidence_score, \"risk_flags\": $json.risk_flags, \"timestamp\": $('Workflow Configuration').item.json.timestamp}} }}",
+        "options": {}
+      },
+      "id": "b6e16e44-1901-4d94-a3e3-8408f3b0346a",
+      "name": "Create CRM Task",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        0,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "alerts@yourcompany.com",
+        "toEmail": "management@yourcompany.com",
+        "subject": "=🚨 ESCALATION REQUIRED: {{ $json.urgency }} Priority Signal",
+        "emailFormat": "text",
+        "text": "=MANAGEMENT ESCALATION REQUIRED\n\nA signal has been flagged for immediate management attention.\n\n=== SIGNAL DETAILS ===\nSource: {{ $('Workflow Configuration').item.json.source }}\nChannel: {{ $('Workflow Configuration').item.json.channel }}\nTimestamp: {{ $('Workflow Configuration').item.json.timestamp }}\n\n=== AI ANALYSIS ===\nIntent: {{ $json.intent }}\nUrgency: {{ $json.urgency }}\nSentiment: {{ $json.sentiment }}\nConfidence Score: {{ $json.confidence_score }}\n\nRisk Flags: {{ $json.risk_flags.join(', ') || 'None identified' }}\n\n=== ORIGINAL CONTENT ===\n{{ $('Workflow Configuration').item.json.content }}\n\n=== RECOMMENDED ACTION ===\nImmediate review and response required.\n\nThis is an automated alert from the Signal Decision Engine.",
+        "options": {}
+      },
+      "id": "31dcb675-f7f9-467c-905c-a1edd0811fad",
+      "name": "Escalate to Management",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        384
+      ],
+      "webhookId": "d536c126-c8a2-441d-997b-02f926c8175a"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://your-helpdesk-api.example.com/api/tickets",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_HELPDESK_API_TOKEN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\"subject\": \"Support Request: \" + $json.intent, \"description\": $('Workflow Configuration').item.json.content, \"priority\": $json.urgency, \"source\": $('Workflow Configuration').item.json.source, \"channel\": $('Workflow Configuration').item.json.channel, \"tags\": $json.risk_flags, \"metadata\": {\"sentiment\": $json.sentiment, \"confidence_score\": $json.confidence_score, \"timestamp\": $('Workflow Configuration').item.json.timestamp}} }}",
+        "options": {}
+      },
+      "id": "bf8016c3-520b-4fb9-adb9-0b80a0575750",
+      "name": "Open Support Ticket",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        0,
+        576
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Signal Webhook": {
+      "main": [
+        [
+          {
+            "node": "Workflow Configuration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Workflow Configuration": {
+      "main": [
+        [
+          {
+            "node": "AI Signal Analyzer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Signal Analyzer",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Signal Analyzer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Signal Analyzer": {
+      "main": [
+        [
+          {
+            "node": "Route by Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Action": {
+      "main": [
+        [
+          {
+            "node": "Send Slack Notification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create CRM Task",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Escalate to Management",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Open Support Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "03469370-ec8b-4484-b59c-425a1caad35a",
+  "meta": {
+    "instanceId": "241b798e45d31da326d6d61cb74091878e9e36afce779239b17a965bf800b1e9"
+  },
+  "id": "Jg-fF--JFV9omrN_2G_wT",
+  "tags": []
+}
